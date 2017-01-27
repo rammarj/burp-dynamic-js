@@ -40,16 +40,16 @@ import javax.swing.table.DefaultTableModel;
  */
 public class UInterface extends JPanel implements ActionListener{
 
-    private DefaultTableModel mdl_tblRequests;
-    private IMessageEditor msgeditor_request, msgeditor_response, msgeditor_modified_request,
-            msgeditor_modified_response;
+    private DefaultTableModel requestsModel;
+    private IMessageEditor msgeditorRequest, msgeditorResponse, msgeditoModifiedRequest,
+            msgeditorModifiedResponse;
     //private JCheckBox chb_automaticAddToList;
-    private LinkedList<IHttpRequestResponse> lst_request, lst_modified_requests;
+    private LinkedList<IHttpRequestResponse> requestsList, modifiedRequestsList;
     private IExtensionHelpers helpers;
     private int contRequests;
-    private JTable tbl_requests;
-    private JButton btn_limpiar;
-    private JTextField txt_host;
+    private JTable requestsTable;
+    private JButton cleanButton;
+    private JTextField hostField;
 
     public UInterface(IBurpExtenderCallbacks ibec) {
         //super(new BorderLayout(10,10));
@@ -57,25 +57,25 @@ public class UInterface extends JPanel implements ActionListener{
         BoxLayout boxLayout = new BoxLayout(this, BoxLayout.Y_AXIS);
         this.setLayout(boxLayout);
         this.helpers = ibec.getHelpers();
-        this.lst_request = new LinkedList<>();
-        this.lst_modified_requests = new LinkedList<>();
-        this.btn_limpiar = new JButton("clear table");
-        this.btn_limpiar.addActionListener(this);
+        this.requestsList = new LinkedList<>();
+        this.modifiedRequestsList = new LinkedList<>();
+        this.cleanButton = new JButton("clear table");
+        this.cleanButton.addActionListener(this);
         //this.btn_same_url_method = new JButton("Delete duplicated items")
         //this.btn_same_url_method.addActionListener(this);
         contRequests = 1;
-        txt_host = new JTextField(20);
+        hostField = new JTextField(20);
         //chb_automaticAddToList = new JCheckBox("Add request to list (If sends CSRF Tokens)");
-        this.mdl_tblRequests = new DefaultTableModel(new String[]{"#id", "method", "url"}, 0);
-        this.msgeditor_request = ibec.createMessageEditor(new IMessageEditorController() {
+        this.requestsModel = new DefaultTableModel(new String[]{"#id", "method", "url"}, 0);
+        this.msgeditorRequest = ibec.createMessageEditor(new IMessageEditorController() {
             @Override
             public IHttpService getHttpService() {
-                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditor_request.getMessage()).getUrl());
+                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditorRequest.getMessage()).getUrl());
             }
 
             @Override
             public byte[] getRequest() {
-                return msgeditor_request.getMessage();
+                return msgeditorRequest.getMessage();
             }
 
             @Override
@@ -83,10 +83,10 @@ public class UInterface extends JPanel implements ActionListener{
                 return null;
             }
         }, false);
-        this.msgeditor_response = ibec.createMessageEditor(new IMessageEditorController() {
+        this.msgeditorResponse = ibec.createMessageEditor(new IMessageEditorController() {
             @Override
             public IHttpService getHttpService() {
-                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditor_response.getMessage()).getUrl());
+                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditorResponse.getMessage()).getUrl());
             }
 
             @Override
@@ -96,18 +96,18 @@ public class UInterface extends JPanel implements ActionListener{
 
             @Override
             public byte[] getResponse() {
-                return msgeditor_response.getMessage();
+                return msgeditorResponse.getMessage();
             }
         }, false);
-        this.msgeditor_modified_request = ibec.createMessageEditor(new IMessageEditorController() {
+        this.msgeditoModifiedRequest = ibec.createMessageEditor(new IMessageEditorController() {
             @Override
             public IHttpService getHttpService() {
-                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditor_modified_request.getMessage()).getUrl());
+                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditoModifiedRequest.getMessage()).getUrl());
             }
 
             @Override
             public byte[] getRequest() {
-                return msgeditor_modified_request.getMessage();
+                return msgeditoModifiedRequest.getMessage();
             }
 
             @Override
@@ -115,10 +115,10 @@ public class UInterface extends JPanel implements ActionListener{
                 return null;
             }
         }, false);
-        this.msgeditor_modified_response = ibec.createMessageEditor(new IMessageEditorController() {
+        this.msgeditorModifiedResponse = ibec.createMessageEditor(new IMessageEditorController() {
             @Override
             public IHttpService getHttpService() {
-                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditor_modified_response.getMessage()).getUrl());
+                return new IHttpServiceImpl(helpers.analyzeRequest(msgeditorModifiedResponse.getMessage()).getUrl());
             }
             @Override
             public byte[] getRequest() {
@@ -126,47 +126,46 @@ public class UInterface extends JPanel implements ActionListener{
             }
             @Override
             public byte[] getResponse() {
-                return msgeditor_modified_response.getMessage();
+                return msgeditorModifiedResponse.getMessage();
             }
         }, false);
         
-        tbl_requests = new JTable();
+        requestsTable = new JTable();
         //tbl_requests.setEnabled(false);
-        tbl_requests.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tbl_requests.addMouseListener(new MouseAdapter() { /*evento para cambiar de Request-Response en el Editor de mensages (MessageEditor)*/
+        requestsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        requestsTable.addMouseListener(new MouseAdapter() { /*evento para cambiar de Request-Response en el Editor de mensages (MessageEditor)*/
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                int selectedRow = tbl_requests.getSelectedRow();
+                int selectedRow = requestsTable.getSelectedRow();
                 if (selectedRow != -1) {
-                    IHttpRequestResponse httpReqResU1 = lst_request.get(selectedRow);
+                    IHttpRequestResponse httpReqResU1 = requestsList.get(selectedRow);
                     try {
-                        msgeditor_request.setMessage(httpReqResU1.getRequest(), true);
-                        msgeditor_response.setMessage(httpReqResU1.getResponse(), false);
+                        msgeditorRequest.setMessage(httpReqResU1.getRequest(), true);
+                        msgeditorResponse.setMessage(httpReqResU1.getResponse(), false);
                         
-                        IHttpRequestResponse httpReqResU2 = lst_modified_requests.get(selectedRow);
-                        msgeditor_modified_request.setMessage(httpReqResU2.getRequest(), true);
-                        msgeditor_modified_response.setMessage(httpReqResU2.getResponse(), false);
+                        IHttpRequestResponse httpReqResU2 = modifiedRequestsList.get(selectedRow);
+                        msgeditoModifiedRequest.setMessage(httpReqResU2.getRequest(), true);
+                        msgeditorModifiedResponse.setMessage(httpReqResU2.getResponse(), false);
 
-                    } catch (Exception ex) {
-                    }
+                    } catch (Exception ex) { }
                 }
             }
         });
-        tbl_requests.setModel(this.mdl_tblRequests);
+        requestsTable.setModel(this.requestsModel);
         JPanel pnl_izquierdo = new JPanel();
         BoxLayout box = new BoxLayout(pnl_izquierdo, BoxLayout.Y_AXIS);
         pnl_izquierdo.setLayout(box);
         JScrollPane scl_tblRequests = new JScrollPane();
-        scl_tblRequests.setViewportView(tbl_requests);
+        scl_tblRequests.setViewportView(requestsTable);
         Border brd_pnlIdors = new TitledBorder(new LineBorder(Color.BLACK), "Suspicious List");
         scl_tblRequests.setBorder(brd_pnlIdors);
         pnl_izquierdo.add(scl_tblRequests);
         
         JPanel pnl_bottom = new JPanel();
-        pnl_bottom.add(btn_limpiar);
+        pnl_bottom.add(cleanButton);
         pnl_bottom.add(new JLabel("Host:"));
-        pnl_bottom.add(txt_host);
+        pnl_bottom.add(hostField);
         pnl_izquierdo.add(pnl_bottom);
         //crear tab que contiene los del usuario 1 y 2, ademas los del CSRF
         JTabbedPane tab_principal = new JTabbedPane();
@@ -175,11 +174,11 @@ public class UInterface extends JPanel implements ActionListener{
         JTabbedPane tab_original = new JTabbedPane();
         JTabbedPane tab_modified = new JTabbedPane();
         //agregar al tab 2 los requestst/responeses del usuario 2
-        tab_original.add("Request", this.msgeditor_request.getComponent());
-        tab_original.add("Response", this.msgeditor_response.getComponent());
+        tab_original.add("Request", this.msgeditorRequest.getComponent());
+        tab_original.add("Response", this.msgeditorResponse.getComponent());
         //agregar al tab 2 los requestst/responeses del usuario 2
-        tab_modified.add("Request", this.msgeditor_modified_request.getComponent());
-        tab_modified.add("Response", this.msgeditor_modified_response.getComponent());
+        tab_modified.add("Request", this.msgeditoModifiedRequest.getComponent());
+        tab_modified.add("Response", this.msgeditorModifiedResponse.getComponent());
         //agregar al tab de csrf el request/response correspondiente
         //agragar los tabs del usuario 1 y 2 y el de CSRF al tab principal
         tab_principal.add("Original", tab_original);
@@ -193,22 +192,22 @@ public class UInterface extends JPanel implements ActionListener{
     }
 
     public void sendToTable(IHttpRequestResponse original, IHttpRequestResponse modified) {
-        this.lst_request.add(original);
-        this.lst_modified_requests.add(modified);
+        this.requestsList.add(original);
+        this.modifiedRequestsList.add(modified);
         IRequestInfo requestInfo = this.helpers.analyzeRequest(original);
-        this.mdl_tblRequests.addRow(new String[]{"" + contRequests++, requestInfo.getMethod()
+        this.requestsModel.addRow(new String[]{"" + contRequests++, requestInfo.getMethod()
                 , requestInfo.getUrl().toString()});
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        this.lst_request.clear();
-        this.lst_modified_requests.clear();
-        this.mdl_tblRequests.setRowCount(0);
+        this.requestsList.clear();
+        this.modifiedRequestsList.clear();
+        this.requestsModel.setRowCount(0);
     }
 
     public String getHost(){
-        return this.txt_host.getText().trim();
+        return this.hostField.getText().trim();
     }
     
 }

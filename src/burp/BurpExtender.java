@@ -8,7 +8,6 @@ package burp;
 import burp.userinterface.Tab;
 import burp.userinterface.UInterface;
 import burp.util.Util;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -23,12 +22,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener {
 
     @Override
     public void registerExtenderCallbacks(IBurpExtenderCallbacks ibec) {
-        BurpExtender.ibec = ibec;//guardar
+        BurpExtender.ibec = ibec;
         helpers = ibec.getHelpers();
         uInterface = new UInterface(ibec);
         ibec.registerHttpListener(this);
-        /*agregar el nuevo tab a burp*/
-        //instanciar la interfaz
         ibec.addSuiteTab(new Tab("Burp Dynamic JS", uInterface));
     }
 
@@ -36,42 +33,39 @@ public class BurpExtender implements IBurpExtender, IHttpListener {
     public void processHttpMessage(int arg0, boolean arg1, IHttpRequestResponse original) {
         if (arg1 == false && IBurpExtenderCallbacks.TOOL_PROXY == arg0 && original.getHost().equals(this.uInterface.getHost())){
             try {
-                IResponseInfo RespOrig = helpers.analyzeResponse(original.getResponse());
-                String mime = RespOrig.getStatedMimeType();
+                IResponseInfo originalResponse = helpers.analyzeResponse(original.getResponse());
+                String mime = originalResponse.getStatedMimeType();
                 String[] scriptMimes = Util.getScriptMimes();
-                boolean aceptar = false;
+                boolean accept = false;
                 for (String scriptMime : scriptMimes) {
                     if (scriptMime.equals(mime)) {
-                        aceptar = true;
+                        accept = true;
                         break;
                     }
                 }
-                if (aceptar == false) {
+                if (accept == false) {
                     return;
                 }
-                IHttpRequestResponse modified = actualizarRequest(original);
+                IHttpRequestResponse modified = updateRequest(original);
                 IResponseInfo RespModif = helpers.analyzeResponse(modified.getResponse());
 
-                String bodyOrig = helpers.bytesToString(original.getResponse()).substring(RespOrig.getBodyOffset());
-                String bodyModif = helpers.bytesToString(modified.getResponse()).substring(RespModif.getBodyOffset());
-                if (!bodyOrig.equals(bodyModif)) {
+                String originalBody = helpers.bytesToString(original.getResponse())
+                        .substring(originalResponse.getBodyOffset());
+                String modifiedBody = helpers.bytesToString(modified.getResponse())
+                        .substring(RespModif.getBodyOffset());
+                
+                if (!originalBody.equals(modifiedBody)) {
                     uInterface.sendToTable(original, modified);
                 }
-            } catch (Exception ex) {
-                try {
-                    ibec.getStderr().write(ex.getMessage().getBytes());
-                } catch (IOException ex1) {
-                }
-            }
+            } catch (Exception ex) { }
         }
     }
 
-    private IHttpRequestResponse actualizarRequest(IHttpRequestResponse baseRequestResponse) {
+    private IHttpRequestResponse updateRequest(IHttpRequestResponse baseRequestResponse) {
         byte[] request = baseRequestResponse.getRequest();
         IRequestInfo ar = helpers.analyzeRequest(request);
-        //String cookieHeader = getCookieHeader(modified.getHeaders());
         List<IParameter> parameters = ar.getParameters();
-        for (IParameter get : parameters) { //remover los parametros cookie
+        for (IParameter get : parameters) { //remove cookies
             if (get.getType() == IParameter.PARAM_COOKIE) {
                 request = helpers.removeParameter(request, get);
             }

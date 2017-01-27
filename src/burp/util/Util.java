@@ -13,25 +13,24 @@ import java.util.SplittableRandom;
  */
 public class Util {
     /**
-     * Generates a random string (for Multipart requests)
+     * Generates randomStr random string (for Multipart requests)
      * @param lenght the char number of the random string
      * @return the random string
      */
     public static String generateRandomString(int lenght) {
         SplittableRandom splittableRandom = new SplittableRandom();
-        StringBuffer a = new StringBuffer();
-        int nextInt, ext;
+        StringBuffer randomStr = new StringBuffer();
+        int randInt, temp;
         for (int i = 0; i < lenght; i++) {
-            nextInt = splittableRandom.nextInt(0, 2);
-            ext = 'a';
-            if (nextInt == 1) {
-                ext = splittableRandom.nextInt('A', 'Z');
+            randInt = splittableRandom.nextInt(0, 2);
+            if (randInt == 1) {
+                temp = splittableRandom.nextInt('A', 'Z');
             } else {
-                ext = splittableRandom.nextInt('a', 'z');
+                temp = splittableRandom.nextInt('a', 'z');
             }
-            a.append((char) ext);
+            randomStr.append((char) temp);
         }
-        return a.toString();
+        return randomStr.toString();
     }
     
     public static String[] getScriptMimes(){
