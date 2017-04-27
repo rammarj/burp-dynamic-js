@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package burp.userinterface;
 
 import burp.IBurpExtenderCallbacks;
@@ -13,7 +9,9 @@ import burp.IMessageEditor;
 import burp.IMessageEditorController;
 import burp.IRequestInfo;
 import burp.util.IHttpServiceImpl;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -49,7 +47,7 @@ public class UInterface extends JPanel implements ActionListener{
     private int contRequests;
     private JTable requestsTable;
     private JButton cleanButton;
-    private JTextField hostField;
+    //private JTextField hostField;
 
     public UInterface(IBurpExtenderCallbacks ibec) {
         //super(new BorderLayout(10,10));
@@ -64,7 +62,7 @@ public class UInterface extends JPanel implements ActionListener{
         //this.btn_same_url_method = new JButton("Delete duplicated items")
         //this.btn_same_url_method.addActionListener(this);
         contRequests = 1;
-        hostField = new JTextField(20);
+        //hostField = new JTextField(20);
         //chb_automaticAddToList = new JCheckBox("Add request to list (If sends CSRF Tokens)");
         this.requestsModel = new DefaultTableModel(new String[]{"#id", "method", "url"}, 0);
         this.msgeditorRequest = ibec.createMessageEditor(new IMessageEditorController() {
@@ -153,20 +151,18 @@ public class UInterface extends JPanel implements ActionListener{
             }
         });
         requestsTable.setModel(this.requestsModel);
-        JPanel pnl_izquierdo = new JPanel();
-        BoxLayout box = new BoxLayout(pnl_izquierdo, BoxLayout.Y_AXIS);
-        pnl_izquierdo.setLayout(box);
-        JScrollPane scl_tblRequests = new JScrollPane();
-        scl_tblRequests.setViewportView(requestsTable);
-        Border brd_pnlIdors = new TitledBorder(new LineBorder(Color.BLACK), "Suspicious List");
-        scl_tblRequests.setBorder(brd_pnlIdors);
-        pnl_izquierdo.add(scl_tblRequests);
+        JPanel pnlIzquierdo = new JPanel(new BorderLayout());
+        JScrollPane sclTbSuspiciuslRequests = new JScrollPane();
+        sclTbSuspiciuslRequests.setViewportView(requestsTable);
+        Border brdPnlSuspicius = new TitledBorder(new LineBorder(Color.BLACK), "Suspicious List");
+        sclTbSuspiciuslRequests.setBorder(brdPnlSuspicius);
+        pnlIzquierdo.add(sclTbSuspiciuslRequests, "Center");
         
-        JPanel pnl_bottom = new JPanel();
-        pnl_bottom.add(cleanButton);
-        pnl_bottom.add(new JLabel("Host:"));
-        pnl_bottom.add(hostField);
-        pnl_izquierdo.add(pnl_bottom);
+        JPanel pnlClearRequests = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pnlClearRequests.add(cleanButton);
+        //pnl_bottom.add(new JLabel("Host:"));
+        //pnl_bottom.add(hostField);
+        pnlIzquierdo.add(pnlClearRequests, "South");
         //crear tab que contiene los del usuario 1 y 2, ademas los del CSRF
         JTabbedPane tab_principal = new JTabbedPane();
         //crear panel preview HTTP
@@ -185,7 +181,7 @@ public class UInterface extends JPanel implements ActionListener{
         tab_principal.add("Modified", tab_modified);
 
         JSplitPane principal = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        principal.add(pnl_izquierdo);
+        principal.add(pnlIzquierdo);
         principal.add(tab_principal);
         add(principal);
         ibec.customizeUiComponent(this);
@@ -205,9 +201,9 @@ public class UInterface extends JPanel implements ActionListener{
         this.modifiedRequestsList.clear();
         this.requestsModel.setRowCount(0);
     }
-
+/*
     public String getHost(){
         return this.hostField.getText().trim();
     }
-    
+  */  
 }

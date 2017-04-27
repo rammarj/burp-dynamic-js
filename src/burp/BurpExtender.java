@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package burp;
 
 import burp.userinterface.Tab;
@@ -31,7 +27,9 @@ public class BurpExtender implements IBurpExtender, IHttpListener {
 
     @Override
     public void processHttpMessage(int arg0, boolean arg1, IHttpRequestResponse original) {
-        if (arg1 == false && IBurpExtenderCallbacks.TOOL_PROXY == arg0 && original.getHost().equals(this.uInterface.getHost())){
+        if (arg1 == false && 
+                (IBurpExtenderCallbacks.TOOL_PROXY == arg0 || IBurpExtenderCallbacks.TOOL_SPIDER == arg0) 
+                && ibec.isInScope(original.getUrl())){
             try {
                 IResponseInfo originalResponse = helpers.analyzeResponse(original.getResponse());
                 String mime = originalResponse.getStatedMimeType();
