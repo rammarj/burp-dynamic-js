@@ -1,4 +1,3 @@
-
 package burp.userinterface;
 
 import burp.IBurpExtenderCallbacks;
@@ -14,40 +13,36 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.LinkedList;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
 /**
  *
  * @author Joaquin R. Martinez
  */
-public class UInterface extends JPanel implements ActionListener{
+public class UInterface extends JPanel implements ActionListener {
 
     private DefaultTableModel requestsModel;
     private IMessageEditor msgeditorRequest, msgeditorResponse, msgeditoModifiedRequest,
             msgeditorModifiedResponse;
-    //private JCheckBox chb_automaticAddToList;
     private LinkedList<IHttpRequestResponse> requestsList, modifiedRequestsList;
     private IExtensionHelpers helpers;
     private int contRequests;
     private JTable requestsTable;
     private JButton cleanButton;
-    //private JTextField hostField;
 
     public UInterface(IBurpExtenderCallbacks ibec) {
         //super(new BorderLayout(10,10));
@@ -118,35 +113,34 @@ public class UInterface extends JPanel implements ActionListener{
             public IHttpService getHttpService() {
                 return new IHttpServiceImpl(helpers.analyzeRequest(msgeditorModifiedResponse.getMessage()).getUrl());
             }
+
             @Override
             public byte[] getRequest() {
                 return null;
             }
+
             @Override
             public byte[] getResponse() {
                 return msgeditorModifiedResponse.getMessage();
             }
         }, false);
-        
+
         requestsTable = new JTable();
-        //tbl_requests.setEnabled(false);
         requestsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        requestsTable.addMouseListener(new MouseAdapter() { /*evento para cambiar de Request-Response en el Editor de mensages (MessageEditor)*/
-
+        requestsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void valueChanged(ListSelectionEvent e) {
                 int selectedRow = requestsTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    IHttpRequestResponse httpReqResU1 = requestsList.get(selectedRow);
-                    try {
-                        msgeditorRequest.setMessage(httpReqResU1.getRequest(), true);
-                        msgeditorResponse.setMessage(httpReqResU1.getResponse(), false);
-                        
-                        IHttpRequestResponse httpReqResU2 = modifiedRequestsList.get(selectedRow);
-                        msgeditoModifiedRequest.setMessage(httpReqResU2.getRequest(), true);
-                        msgeditorModifiedResponse.setMessage(httpReqResU2.getResponse(), false);
+                IHttpRequestResponse httpReqResU1 = requestsList.get(selectedRow);
+                try {
+                    msgeditorRequest.setMessage(httpReqResU1.getRequest(), true);
+                    msgeditorResponse.setMessage(httpReqResU1.getResponse(), false);
 
-                    } catch (Exception ex) { }
+                    IHttpRequestResponse httpReqResU2 = modifiedRequestsList.get(selectedRow);
+                    msgeditoModifiedRequest.setMessage(httpReqResU2.getRequest(), true);
+                    msgeditorModifiedResponse.setMessage(httpReqResU2.getResponse(), false);
+
+                } catch (Exception ex) {
                 }
             }
         });
@@ -157,7 +151,7 @@ public class UInterface extends JPanel implements ActionListener{
         Border brdPnlSuspicius = new TitledBorder(new LineBorder(Color.BLACK), "Suspicious List");
         sclTbSuspiciuslRequests.setBorder(brdPnlSuspicius);
         pnlIzquierdo.add(sclTbSuspiciuslRequests, "Center");
-        
+
         JPanel pnlClearRequests = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         pnlClearRequests.add(cleanButton);
         //pnl_bottom.add(new JLabel("Host:"));
@@ -183,7 +177,7 @@ public class UInterface extends JPanel implements ActionListener{
         JSplitPane principal = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         principal.add(pnlIzquierdo);
         principal.add(tab_principal);
-        add(principal);
+        this.add(principal);
         ibec.customizeUiComponent(this);
     }
 
@@ -191,8 +185,8 @@ public class UInterface extends JPanel implements ActionListener{
         this.requestsList.add(original);
         this.modifiedRequestsList.add(modified);
         IRequestInfo requestInfo = this.helpers.analyzeRequest(original);
-        this.requestsModel.addRow(new String[]{"" + contRequests++, requestInfo.getMethod()
-                , requestInfo.getUrl().toString()});
+        this.requestsModel.addRow(new String[]{"" + contRequests++, requestInfo.getMethod(),
+             requestInfo.getUrl().toString()});
     }
 
     @Override
@@ -201,9 +195,5 @@ public class UInterface extends JPanel implements ActionListener{
         this.modifiedRequestsList.clear();
         this.requestsModel.setRowCount(0);
     }
-/*
-    public String getHost(){
-        return this.hostField.getText().trim();
-    }
-  */  
+    
 }
