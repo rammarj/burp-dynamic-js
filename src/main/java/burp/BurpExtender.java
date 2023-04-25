@@ -1,10 +1,8 @@
 package burp;
 
-import burp.userinterface.Tab;
-import burp.userinterface.UInterface;
-import burp.util.Util;
+import burp.tab.Tab;
+import java.util.Arrays;
 import java.util.List;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -12,56 +10,63 @@ import javax.swing.JOptionPane;
  */
 public class BurpExtender implements IBurpExtender, IHttpListener {
 
-    public static IBurpExtenderCallbacks ibec;
-    private UInterface uInterface;
-    private IExtensionHelpers helpers;
+	public static IBurpExtenderCallbacks ibec;
+	private Tab burpTab;
+	private IExtensionHelpers helpers;
 
-    @Override
-    public void registerExtenderCallbacks(IBurpExtenderCallbacks ibec) {
-        BurpExtender.ibec = ibec;
-        helpers = ibec.getHelpers();
-        uInterface = new UInterface(ibec);
-        ibec.registerHttpListener(this);
-        ibec.addSuiteTab(new Tab("Burp Dynamic JS", uInterface));
-    }
+	@Override
+	public void registerExtenderCallbacks(IBurpExtenderCallbacks ibec) {
+		BurpExtender.ibec = ibec;
+		helpers = ibec.getHelpers();
+		burpTab = new Tab(ibec);
+		ibec.registerHttpListener(this);
+		ibec.addSuiteTab(burpTab);
+	}
 
-    @Override
-    public void processHttpMessage(int arg0, boolean arg1, IHttpRequestResponse original) {
-        if (arg1 == false && 
-                (IBurpExtenderCallbacks.TOOL_PROXY == arg0 || IBurpExtenderCallbacks.TOOL_SPIDER == arg0) 
-                && ibec.isInScope( helpers.analyzeRequest(original.getResponse()).getUrl())){
-            try {
-                IResponseInfo originalResponse = helpers.analyzeResponse(original.getResponse());
-                if (! Util.getScriptMimes().stream().anyMatch(e -> e.equals(originalResponse.getStatedMimeType()))) {
-                    return;
-                }
-                IHttpRequestResponse modified = updateRequest(original);
-                IResponseInfo RespModif = helpers.analyzeResponse(modified.getResponse());
+	@Override
+	public void processHttpMessage(int toolFlag, boolean isRequest, IHttpRequestResponse original) {
+		// interested only in responses.
+		if (isRequest)
+			return;
 
-                String originalBody = helpers.bytesToString(original.getResponse())
-                        .substring(originalResponse.getBodyOffset());
-                String modifiedBody = helpers.bytesToString(modified.getResponse())
-                        .substring(RespModif.getBodyOffset());
-                
-                if (!originalBody.equals(modifiedBody)) {
-                    uInterface.sendToTable(original, modified);
-                }
-            } catch (Exception ex) { 
-            	JOptionPane.showMessageDialog(uInterface, ex.toString(), "Error", JOptionPane.ERROR_MESSAGE);            	
-            }
-        }
-    }
+		// only process in proxy and spider tools.
+		if (IBurpExtenderCallbacks.TOOL_PROXY != toolFlag && IBurpExtenderCallbacks.TOOL_SPIDER != toolFlag)
+			return;
 
-    private IHttpRequestResponse updateRequest(IHttpRequestResponse baseRequestResponse) {
-        byte[] request = baseRequestResponse.getRequest();
-        IRequestInfo ar = helpers.analyzeRequest(request);
-        List<IParameter> parameters = ar.getParameters();
-        for (IParameter get : parameters) { //remove cookies
-            if (get.getType() == IParameter.PARAM_COOKIE) {
-                request = helpers.removeParameter(request, get);
-            }
-        }
-        return ibec.makeHttpRequest(baseRequestResponse.getHttpService(), request);
-    }
+		IRequestInfo requestInfo = helpers.analyzeRequest(original);
+		if (burpTab.isOnlyInScopeDomains() && !ibec.isInScope(requestInfo.getUrl()))
+			return;
+		
+		if (burpTab.messageAlreadyExists(requestInfo.getUrl().toString()))
+			return;
+		
+		IResponseInfo originalResponse = helpers.analyzeResponse(original.getResponse());
+		List<String> mimeTypes = Arrays.asList("script", "JSON", "CSS");
+		if (!mimeTypes.stream().anyMatch(e -> e.equals(originalResponse.getStatedMimeType())))
+			return;
+		
+		
+		IHttpRequestResponse secondRequest = makeRequestWithoutCookies(original);
+		IResponseInfo secondResponse = helpers.analyzeResponse(secondRequest.getResponse());
+		String originalBody = helpers.bytesToString(original.getResponse())
+				.substring(originalResponse.getBodyOffset());
+		String modifiedBody = helpers.bytesToString(secondRequest.getResponse()).substring(secondResponse.getBodyOffset());
+
+		if (!originalBody.equals(modifiedBody))
+			burpTab.sendToTable(original, secondRequest);
+		
+	}
+
+	private IHttpRequestResponse makeRequestWithoutCookies(IHttpRequestResponse baseRequestResponse) {
+		byte[] request = baseRequestResponse.getRequest();
+		IRequestInfo ri = helpers.analyzeRequest(request);
+		List<IParameter> parameters = ri.getParameters();
+		for (IParameter p : parameters) {
+			if (p.getType() == IParameter.PARAM_COOKIE) {
+				request = helpers.removeParameter(request, p);
+			}
+		}
+		return ibec.makeHttpRequest(baseRequestResponse.getHttpService(), request);
+	}
 
 }

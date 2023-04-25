@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>burp-dynamic-js</groupId>
 	<artifactId>burp-dynamic-js</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<name>Burp Dynamic JS Detector</name>
 	<description>Detects dynamic javascript files generated on server side</description>
 
@@ -25,11 +25,10 @@
 	</dependencies>
 
 	<build>
-		<sourceDirectory>src</sourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>3.11.0</version>
 			</plugin>
 		</plugins>
 	</build>

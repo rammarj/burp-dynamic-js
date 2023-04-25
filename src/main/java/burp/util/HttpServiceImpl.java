@@ -2,7 +2,6 @@
 package burp.util;
 
 import burp.IHttpService;
-import burp.IRequestInfo;
 import java.net.URL;
 /**
  *
@@ -14,10 +13,6 @@ public class HttpServiceImpl implements IHttpService {
 
     public HttpServiceImpl(URL url) {
         this.url = url;
-    }
-
-    public HttpServiceImpl(IRequestInfo info) {
-        this(info.getUrl());
     }
 
     @Override
